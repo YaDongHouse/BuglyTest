@@ -1,0 +1,93 @@
+apply plugin: 'com.android.application'
+// 依赖插件脚本
+apply from: 'tinker-support.gradle'
+
+// Create a variable called keystorePropertiesFile, and initialize it to your
+// keystore.properties file, in the rootProject folder.
+def keystorePropertiesFile = rootProject.file("/app/keystore/keystore.properties")
+
+// Initialize a new Properties() object called keystoreProperties.
+def keystoreProperties = new Properties()
+
+// Load your keystore.properties file into the keystoreProperties object.
+keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+
+android {
+    compileSdkVersion 25
+    buildToolsVersion "27.0.1"
+    defaultConfig {
+        applicationId "com.yadong.bugly"
+        minSdkVersion 14
+        targetSdkVersion 25
+        versionCode 2
+        versionName "2.0"
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+
+        // 开启multidex
+        multiDexEnabled true
+
+        ndk {
+            //设置支持的SO库架构
+            abiFilters 'armeabi' //, 'x86', 'armeabi-v7a', 'x86_64', 'arm64-v8a'
+        }
+    }
+
+
+    // 签名配置
+    signingConfigs {
+        release {
+            storeFile file(keystoreProperties['keystore-release-storeFile'])
+            storePassword keystoreProperties['keystore-release-storePassword']
+            keyAlias keystoreProperties['keystore-release-keyAlias']
+            keyPassword keystoreProperties['keystore-release-keyPassword']
+        }
+
+        debug {
+            storeFile file(keystoreProperties['keystore-debug-storeFile'])
+            storePassword keystoreProperties['keystore-debug-storePassword']
+            keyAlias keystoreProperties['keystore-debug-keyAlias']
+            keyPassword keystoreProperties['keystore-debug-keyPassword']
+        }
+
+    }
+
+
+
+    buildTypes {
+        release {
+            minifyEnabled true
+            signingConfig signingConfigs.release
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+        debug {
+            debuggable true
+            minifyEnabled false
+            signingConfig signingConfigs.debug
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+
+
+    lintOptions {
+        checkReleaseBuilds false
+        abortOnError false
+    }
+}
+
+dependencies {
+    compile fileTree(dir: 'libs', include: ['*.jar'])
+    androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
+        exclude group: 'com.android.support', module: 'support-annotations'
+    })
+    compile 'com.android.support:appcompat-v7:25.3.1'
+    compile 'com.android.support.constraint:constraint-layout:1.0.2'
+    testCompile 'junit:junit:4.12'
+    //support-v4包
+    compile 'com.android.support:support-v4:25.3.1'
+    //解决android系统方法数超过64K引起编译错误的问题
+    compile "com.android.support:multidex:1.0.1"
+    //注释掉原有bugly的仓库
+    //compile 'com.tencent.bugly:crashreport:latest.release'//其中latest.release指代最新版本号，也可以指定明确的版本号，例如2.3.2
+    compile 'com.tencent.bugly:crashreport_upgrade:latest.release'//其中latest.release指代最新版本号，也可以指定明确的版本号，例如1.2.0
+    compile 'com.tencent.bugly:nativecrashreport:latest.release' //其中latest.release指代最新版本号，也可以指定明确的版本号，例如2.2.0
+}
